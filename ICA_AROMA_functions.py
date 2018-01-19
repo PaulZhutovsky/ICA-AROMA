@@ -129,7 +129,7 @@ def runICA(fslDir, inFile, outDir, melDirIn, mask, dim, TR):
                         melICthr]))
 
 
-def register2MNI(fslDir, inFile, outFile, affmat, warp):
+def register2MNI(fslDir, inFile, outFile, affmat, warp, affmat2=''):
     """ This function registers an image (or time-series of images) to MNI152 T1 2mm. If no affmat is defined, it only warps (i.e. it assumes that the data has been registerd to the structural scan associated with the warp-file already). If no warp is defined either, it only resamples the data to 2mm isotropic if needed (i.e. it assumes that the data has been registered to a MNI152 template). In case only an affmat file is defined, it assumes that the data has to be linearly registered to MNI152 (i.e. the user has a reason not to use non-linear registration on the data).
 
     Parameters
@@ -139,6 +139,7 @@ def register2MNI(fslDir, inFile, outFile, affmat, warp):
     outFile:    Full path of the output file
     affmat:     Full path of the mat file describing the linear registration (if data is still in native space)
     warp:       Full path of the warp file describing the non-linear registration (if data has not been registered to MNI152 space yet)
+    affmat2:    Full path of the affine matrix describing linear affine transformation between T1 and MNI (ANTs mode) (default: '')
 
     Output (within the requested output directory)
     ---------------------------------------------------------------------------------
@@ -189,8 +190,8 @@ def register2MNI(fslDir, inFile, outFile, affmat, warp):
                             '-applyxfm -init ' + affmat,
                             '-interp trilinear']))
 
-    # If both a affmat- and warp-file have been defined, apply the warping accordingly
-    else:
+    # If both a affmat- and warp-file have been defined, apply the warping accordingly (FSL)
+    elif (len(affmat) != 0) and (len(warp) != 0) and (len(affmat2) == 0):
         os.system(' '.join([os.path.join(fslDir, 'applywarp'),
                             '--ref=' + ref,
                             '--in=' + inFile,
@@ -198,6 +199,20 @@ def register2MNI(fslDir, inFile, outFile, affmat, warp):
                             '--warp=' + warp,
                             '--premat=' + affmat,
                             '--interp=trilinear']))
+
+    # If both affmats- and warp-file have been defined, apply the warping accordingly (ANTs)
+    else:
+        os.system(' '.join(['${ANTSPATH}/antsApplyTransforms',
+                            '-d 3',
+                            '-e 3',
+                            '-i ' + inFile,
+                            '-r ' + ref,
+                            '-o ' + outFile,
+                            '-n Linear',
+                            '-t ' + warp,
+                            '-t ' + affmat2,
+                            '-t ' + affmat,
+                            '--float']))
 
 
 def feature_time_series(melmix, mc):

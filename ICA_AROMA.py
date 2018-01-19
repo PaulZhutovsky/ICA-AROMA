@@ -30,6 +30,7 @@ nonfeatoptions.add_argument('-i', '-in',dest="inFile", required=False, help='Inp
 nonfeatoptions.add_argument('-mc', dest="mc", required=False, help='File name of the motion parameters obtained after motion realingment (e.g., FSL mcflirt). Note that the order of parameters does not matter, should your file not originate from FSL mcflirt. (e.g., /home/user/PROJECT/SUBJECT.feat/mc/prefiltered_func_data_mcf.par')
 nonfeatoptions.add_argument('-a','-affmat', dest="affmat", default="", help='File name of the mat-file describing the affine registration (e.g., FSL FLIRT) of the functional data to structural space (.mat file). (e.g., /home/user/PROJECT/SUBJECT.feat/reg/example_func2highres.mat')
 nonfeatoptions.add_argument('-w','-warp', dest="warp", default="", help='File name of the warp-file describing the non-linear registration (e.g., FSL FNIRT) of the structural data to MNI152 space (.nii.gz). (e.g., /home/user/PROJECT/SUBJECT.feat/reg/highres2standard_warp.nii.gz')
+nonfeatoptions.add_argument('-a2','-affmat2', dest="affmat2", default="", help='File name of the mat-file describing the affine registration of the structural data to MNI152 space (ANTs mode).')
 nonfeatoptions.add_argument('-m','-mask', dest="mask", default="", help='File name of the mask to be used for MELODIC (denoising will be performed on the original/non-masked input data)')
 
 # Required options in Feat mode
@@ -91,6 +92,7 @@ else:
 	mc = args.mc
 	affmat = args.affmat
 	warp = args.warp
+	affmat2 = args.affmat2
 	melDir = args.melDir
 
 	# Check whether the files exist
@@ -114,6 +116,10 @@ else:
 		if not os.path.isfile(warp): 
 			print('The specified warp file does not exist.')
 			cancel=True
+	if affmat2:
+		if not os.path.isfile(affmat2):
+			print('The specified affmat2 file does not exist.')
+			cancel = True
 
 # Parse the arguments which do not depend on whether a Feat directory has been specified
 outDir = args.outDir
@@ -194,7 +200,7 @@ print('Step 2) Automatic classification of the components')
 print('  - registering the spatial maps to MNI')
 melIC = os.path.join(outDir,'melodic_IC_thr.nii.gz')
 melIC_MNI =  os.path.join(outDir,'melodic_IC_thr_MNI2mm.nii.gz')
-aromafunc.register2MNI(fslDir, melIC, melIC_MNI, affmat, warp)
+aromafunc.register2MNI(fslDir, melIC, melIC_MNI, affmat, warp, affmat2)
 
 print('  - extracting the CSF & Edge fraction features')
 edgeFract, csfFract = aromafunc.feature_spatial(fslDir, outDir, scriptDir, melIC_MNI)
